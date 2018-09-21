@@ -1,0 +1,50 @@
+{
+    "variables": {
+        "cloudbreak_version": "2.7.1",
+        "cloudbreak_user": "cloudbreak",
+        "cloudbreak_home": "/opt/cloudbreak",
+        "cloudbreak_profile": "/tmp/Profile"
+    },
+    "builders": [
+        {
+            "type": "amazon-ebs",
+            "region": "us-east-2",
+            "instance_type": "t2.micro",
+            "ssh_username": "ec2-user",
+            "ami_name": "packer-aws-ebs-{{timestamp}}",
+            "source_ami_filter": {
+                "filters": {
+                    "virtualization-type": "hvm",
+                    "name": "amzn2-ami-hvm-2.0.20180810-x86_64-gp2",
+                    "root-device-type": "ebs"
+                },
+                "owners": ["137112412989"],
+                "most_recent": true
+            }
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+                "sudo mkdir -p {{user `cloudbreak_home`}}"
+            ]
+        },
+        {
+            "type": "file",
+            "source": "cloudbreak.sh",
+            "destination": "/tmp/cloudbreak-setup"
+        },
+        {
+            "type": "file",
+            "source": "Profile",
+            "destination": "{{user `cloudbreak_profile`}}"
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "sudo /tmp/cloudbreak-setup {{user `cloudbreak_user`}} {{user `cloudbreak_home`}} {{user `cloudbreak_profile`}} {{user `cloudbreak_version`}}"
+            ]
+        }
+    ]
+}
