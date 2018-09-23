@@ -4,15 +4,17 @@ After=docker.service
 
 [Service]
 Type=simple
-User=cloudbreak
+TimeoutStartSec=300
+EnvironmentFile=/etc/sysconfig/cloudbreak
 WorkingDirectory=/opt/cloudbreak
 ExecStartPre=/usr/bin/cbd regenerate
+ExecStartPre=/usr/bin/cbd pull-parallel
 ExecStartPre=/usr/bin/cloudbreak-db
 ExecStartPre=/usr/bin/cbd start-wait
-ExecStart=/usr/bin/cbd logs
+ExecStart=/usr/bin/cloudbreak-watch
 ExecStop=/usr/bin/cbd kill
-ExecStop=/usr/bin/cbd delete --force
-Restart=always
+ExecStopPost=/usr/bin/cbd delete --force
+Restart=on-failure
 
 [Install]
 WantedBy=docker.service

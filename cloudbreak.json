@@ -1,15 +1,17 @@
 {
     "variables": {
         "cloudbreak_version": "2.7.1",
-        "cloudbreak_user": "cloudbreak",
         "cloudbreak_home": "/opt/cloudbreak",
-        "cloudbreak_profile": "/tmp/Profile"
+        "cloudbreak_profile": "/tmp/Profile",
+        "cloudbreak_service": "/tmp/cloudbreak.service",
+        "cloudbreak_db": "/tmp/cloudbreak-db.sh",
+        "cloudbreak_watch": "/tmp/cloudbreak-watch.sh"
     },
     "builders": [
         {
             "type": "amazon-ebs",
             "region": "us-east-2",
-            "instance_type": "t2.micro",
+            "instance_type": "t2.xlarge",
             "ssh_username": "ec2-user",
             "ami_name": "packer-aws-ebs-{{timestamp}}",
             "source_ami_filter": {
@@ -25,15 +27,19 @@
     ],
     "provisioners": [
         {
-            "type": "shell",
-            "inline": [
-                "sudo mkdir -p {{user `cloudbreak_home`}}"
-            ]
-        },
-        {
             "type": "file",
             "source": "cloudbreak-setup.sh",
             "destination": "/tmp/cloudbreak-setup"
+        },
+        {
+            "type": "file",
+            "source": "cloudbreak-db.sh",
+            "destination": "{{user `cloudbreak_db`}}"
+        },
+        {
+            "type": "file",
+            "source": "cloudbreak-watch.sh",
+            "destination": "{{user `cloudbreak_watch`}}"
         },
         {
             "type": "file",
@@ -41,10 +47,25 @@
             "destination": "{{user `cloudbreak_profile`}}"
         },
         {
+            "type": "file",
+            "source": "cloudbreak.service",
+            "destination": "{{user `cloudbreak_service`}}"
+        },
+        {
             "type": "shell",
-            "inline": [
-                "sudo /tmp/cloudbreak-setup {{user `cloudbreak_user`}} {{user `cloudbreak_home`}} {{user `cloudbreak_profile`}} {{user `cloudbreak_version`}}"
-            ]
+            "environment_vars": [
+                "CLOUDBREAK_PROFILE={{user `cloudbreak_profile`}}",
+                "CLOUDBREAK_HOME={{user `cloudbreak_home`}}",
+                "CLOUDBREAK_SERVICE={{user `cloudbreak_service`}}",
+                "CLOUDBREAK_DB={{user `cloudbreak_db`}}",
+                "CLOUDBREAK_WATCH={{user `cloudbreak_watch`}}",
+                "CLOUDBREAK_VERSION={{user `cloudbreak_version`}}"
+            ],
+            "use_env_var_file": true,
+            "scripts": [
+                "cloudbreak-setup.sh"
+            ],
+            "execute_command": "chmod +x {{.Path}}; set -a && source {{.EnvVarFile}} && set +a && sudo -E {{.Path}}"
         }
     ]
 }
