@@ -1,0 +1,18 @@
+[Unit]
+Description=Cloudbreak Deployer
+After=docker.service
+
+[Service]
+Type=simple
+User=cloudbreak
+WorkingDirectory=/opt/cloudbreak
+ExecStartPre=/usr/bin/cbd regenerate
+ExecStartPre=/usr/bin/cloudbreak-db
+ExecStartPre=/usr/bin/cbd start-wait
+ExecStart=/usr/bin/cbd logs
+ExecStop=/usr/bin/cbd kill
+ExecStop=/usr/bin/cbd delete --force
+Restart=always
+
+[Install]
+WantedBy=docker.service

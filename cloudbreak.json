@@ -32,7 +32,7 @@
         },
         {
             "type": "file",
-            "source": "cloudbreak.sh",
+            "source": "cloudbreak-setup.sh",
             "destination": "/tmp/cloudbreak-setup"
         },
         {
