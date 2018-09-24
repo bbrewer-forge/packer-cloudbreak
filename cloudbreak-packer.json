@@ -27,9 +27,12 @@
     ],
     "provisioners": [
         {
-            "type": "file",
-            "source": "cloudbreak-setup.sh",
-            "destination": "/tmp/cloudbreak-setup"
+            "type": "shell",
+            "expect_disconnect": true,
+            "inline": [
+                "sudo yum update -y",
+                "sudo reboot"
+            ]
         },
         {
             "type": "file",
@@ -66,6 +69,13 @@
                 "cloudbreak-setup.sh"
             ],
             "execute_command": "chmod +x {{.Path}}; set -a && source {{.EnvVarFile}} && set +a && sudo -E {{.Path}}"
+        }
+    ],
+    "post-processors": [
+        {
+            "type": "manifest",
+            "output": "manifest.json",
+            "strip_path": true
         }
     ]
 }

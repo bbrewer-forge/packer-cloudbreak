@@ -5,3 +5,5 @@ packer_cache/
 *.box
 
 .DS_Store
+
+manifest.json

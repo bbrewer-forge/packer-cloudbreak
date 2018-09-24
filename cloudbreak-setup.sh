@@ -1,56 +1,87 @@
 #!/usr/bin/env bash
-set -eux
 
-yum install -y \
-  yum-utils \
-  device-mapper-persistent-data \
-  lvm2 \
-  unzip \
-  tar \
-  curl \
-  gzip \
-  shadow-utils \
-  openssl \
-  docker \
-  jq
+main() {
+    set -eux
 
-systemctl enable docker
-systemctl start docker
+    install-dependencies
+    install-software
+    install-service-wrapper
 
-curl -Ls public-repo-1.hortonworks.com/HDP/cloudbreak/cloudbreak-deployer_${CLOUDBREAK_VERSION}_$(uname)_x86_64.tgz \
-  | tar -xz -C /bin cbd
-cbd --version
+    initialize-software
+    smoke-test-software
+    prepare-for-snapshot
+}
 
-curl -Ls https://s3-us-west-2.amazonaws.com/cb-cli/cb-cli_${CLOUDBREAK_VERSION}_$(uname -s)_$(uname -m).tgz \
-  | tar -xz -C /bin cb
-cb --version
+install-dependencies() {
+    yum install -y \
+        yum-utils \
+        device-mapper-persistent-data \
+        lvm2 \
+        unzip \
+        tar \
+        curl \
+        gzip \
+        shadow-utils \
+        openssl \
+        docker \
+        jq
 
-mkdir -p ${CLOUDBREAK_HOME}
-cd ${CLOUDBREAK_HOME}
+    systemctl enable docker
+    systemctl start docker
+}
 
-mv ${CLOUDBREAK_PROFILE} ${CLOUDBREAK_HOME}
-install ${CLOUDBREAK_WATCH} /usr/bin/cloudbreak-watch
-install ${CLOUDBREAK_DB} /usr/bin/cloudbreak-db
-cat ${CLOUDBREAK_SERVICE} \
-    | envsubst > /etc/systemd/system/cloudbreak.service
-env | grep CLOUDBREAK_HOME > /etc/sysconfig/cloudbreak
+install-software() {
+    curl -Ls public-repo-1.hortonworks.com/HDP/cloudbreak/cloudbreak-deployer_${CLOUDBREAK_VERSION}_$(uname)_$(uname -m).tgz \
+        | tar -xz -C /bin cbd
+    cbd --version
 
-systemctl daemon-reload
-systemctl enable cloudbreak
-systemctl start cloudbreak \
-    || { journalctl -u cloudbreak; exit 1; }
+    curl -Ls https://s3-us-west-2.amazonaws.com/cb-cli/cb-cli_${CLOUDBREAK_VERSION}_$(uname -s)_$(uname -m).tgz \
+        | tar -xz -C /bin cb
+    cb --version
+}
 
-(
-    set +x
-    source Profile
-    set -x
-    timeout -k 9 5 cb blueprint list \
-        || { echo "Failed to run cloudbreak command"; exit 1; }
-)
+install-service-wrapper() {
+    install ${CLOUDBREAK_WATCH} /usr/bin/cloudbreak-watch
+    install ${CLOUDBREAK_DB} /usr/bin/cloudbreak-db
+    cat ${CLOUDBREAK_SERVICE} \
+        | envsubst > /etc/systemd/system/cloudbreak.service
+    env | grep CLOUDBREAK_HOME > /etc/sysconfig/cloudbreak
+    systemctl daemon-reload
+}
 
-systemctl stop cloudbreak
-systemctl disable cloudbreak
+initialize-software() {
+    mkdir -p ${CLOUDBREAK_HOME}
+    mv ${CLOUDBREAK_PROFILE} ${CLOUDBREAK_HOME}
 
-rm -rf /tmp/cloudbreak*
-find . -maxdepth 1 -mindepth 1 ! -name .deps \
-    | xargs -r rm -rf
+    systemctl enable cloudbreak
+    systemctl start cloudbreak \
+        || { journalctl -u cloudbreak; exit 1; }
+}
+
+smoke-test-software() {
+    (
+        cd ${CLOUDBREAK_HOME}
+
+        set +x
+        source Profile
+        set -x
+
+        timeout -k 9 5 cb blueprint list \
+            || { echo "Failed to run cloudbreak command"; exit 1; }
+    )
+}
+
+prepare-for-snapshot() {
+    systemctl stop cloudbreak
+    systemctl disable cloudbreak
+
+    rm -rf \
+       ${CLOUDBREAK_WATCH} \
+       ${CLOUDBREAK_SERVICE} \
+       ${CLOUDBREAK_DB}
+
+    find ${CLOUDBREAK_HOME} -maxdepth 1 -mindepth 1 ! -name .deps \
+        | xargs -r rm -rf
+}
+
+main "${@}"

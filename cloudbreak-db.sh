@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# TODO - the cloudbreak-setup.sh smoketest doesn't cover all of this - custom db case has been manually tested
 
 main() {
     (
