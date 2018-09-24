@@ -40,10 +40,17 @@ systemctl enable cloudbreak
 systemctl start cloudbreak \
     || { journalctl -u cloudbreak; exit 1; }
 
-# use cb to do something
+(
+    set +x
+    source Profile
+    set -x
+    timeout -k 9 5 cb blueprint list \
+        || { echo "Failed to run cloudbreak command"; exit 1; }
+)
 
 systemctl stop cloudbreak
 systemctl disable cloudbreak
 
 rm -rf /tmp/cloudbreak*
-rm -rf Profile
+find . -maxdepth 1 -mindepth 1 ! -name .deps \
+    | xargs -r rm -rf

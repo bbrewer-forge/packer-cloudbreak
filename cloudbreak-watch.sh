@@ -1,16 +1,5 @@
 #!/usr/bin/env bash
 
-import-cb-variables() {
-    $(cbd env export) &> /dev/null \
-        || echo "Failed to import SOME Cloudbreak variables"
-}
-
-cloudbreak-available() {
-    # status is only there if there is a non-standard response
-    ! cbd util get-usage \
-        | jq -re '.status' &> /dev/null
-}
-
 main() {
     (
         set -eu
@@ -25,6 +14,17 @@ main() {
 
         exit 1
     )
+}
+
+import-cb-variables() {
+    $(cbd env export) &> /dev/null \
+        || echo "Failed to import SOME Cloudbreak variables"
+}
+
+cloudbreak-available() {
+    # status is only there if there is a non-standard response
+    ! cbd util get-usage \
+        | jq -re '.status' &> /dev/null
 }
 
 main "${@}"

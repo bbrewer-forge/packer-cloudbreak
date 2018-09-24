@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
+
 main() {
     (
-    set -e
+        set -e
 
-    cd ${CLOUDBREAK_HOME}
+        cd ${CLOUDBREAK_HOME}
 
-    import-cb-variables
-    check-for-custom-db-or-exit
+        import-cb-variables
+        check-for-custom-db-or-exit
 
-    set -u
+        set -u
 
-    for db_name in cbdb uaadb periscopedb; do
-        if ! db-exists ${db_name}; then
-            echo "DB ${db_name} not found, creating!"
-            db-create ${db_name}
-        fi
-    done
+        for db_name in cbdb uaadb periscopedb; do
+            if ! db-exists ${db_name}; then
+                echo "DB ${db_name} not found, creating!"
+                db-create ${db_name}
+            fi
+        done
     )
 }
 
@@ -38,13 +39,13 @@ db-execute() {
     local -xr PGPASSWORD=${CB_DB_ENV_PASS}
 
     docker run \
-           --rm \
-           --env PGHOST \
-           --env PGPORT \
-           --env PGUSER \
-           --env PGPASSWORD \
-           postgres:${DOCKER_TAG_POSTGRES} \
-           bash -c "${1}"
+        --rm \
+        --env PGHOST \
+        --env PGPORT \
+        --env PGUSER \
+        --env PGPASSWORD \
+        postgres:${DOCKER_TAG_POSTGRES} \
+        bash -c "${1}"
 }
 
 db-create() {

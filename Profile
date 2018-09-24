@@ -1,4 +1,10 @@
+# for initializing cloudbreak via `cbd` command
 export UAA_DEFAULT_SECRET=5b8a03a9657f34b5b4183c7d570209ba
 export UAA_DEFAULT_USER_PW=f508b65f5a6b32d057c51bc4f1970c7a
 export UAA_DEFAULT_USER_EMAIL=admin@example.com
 export PUBLIC_IP=$(hostname -f)
+
+# for testing cloudbreak via `cb` command
+export CB_SERVER_ADDRESS=${PUBLIC_IP}
+export CB_USER_NAME=${UAA_DEFAULT_USER_EMAIL}
+export CB_PASSWORD=${UAA_DEFAULT_USER_PW}
